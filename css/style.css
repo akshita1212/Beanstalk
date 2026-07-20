@@ -173,7 +173,7 @@ em { font-style: normal; color: var(--teal); }
 /* ---------- Pinned growth stage ---------- */
 
 .stage { display: none; position: relative; }
-.scrub-on .stage { display: block; height: 800vh; }
+.scrub-on .stage { display: block; height: 720vh; }
 
 .stage-sticky {
   position: sticky;
@@ -382,7 +382,6 @@ em { font-style: normal; color: var(--teal); }
   border: 1px solid var(--line);
   box-shadow: 0 8px 24px rgba(13, 80, 60, .08);
 }
-.board-row img.flip { transform: scaleX(-1); }
 .board-copy { display: flex; flex-direction: column; gap: 12px; }
 
 /* ---------- Preloader ---------- */

@@ -31,11 +31,9 @@ python3 -m http.server 8000
 
 ## Retiming the story
 
-Playback runs on a virtual timeline (`SEGMENTS` in `js/main.js`) rather than the raw
-video: the source's extra left-curl segment is replayed horizontally mirrored to grow a
-matching second right leaf, so the story becomes seed → left leaf → right leaf → left
-leaf → right leaf → bud → bloom. Card timings live on the elements in `index.html`
-(`data-in` / `data-out`, both 0–1 across the stage) and map onto that virtual timeline.
+Card timings live on the elements in `index.html` (`data-in` / `data-out`, both 0–1 across
+the stage). At 16 fps, video time `t` maps to progress `p = t / 10` and frame
+`n = round(t × 16) + 1`.
 
 ## Regenerating frames
 

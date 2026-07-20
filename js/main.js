@@ -16,21 +16,6 @@
     return "assets/frames/frame_" + String(i).padStart(3, "0") + ".webp";
   };
 
-  // Virtual playback timeline (0-indexed source frames). The source video
-  // grows one extra left curl before the bud; we replay that curl segment
-  // mirrored to grow a matching extra right leaf, so the story becomes:
-  // seed → left leaf → right leaf → left leaf 2 → right leaf 2 → bud → bloom.
-  var SEGMENTS = [
-    { from: 0,   to: 112, flip: false }, // seed → sprout → leaf L → leaf R → leaf L2
-    { from: 96,  to: 113, flip: true  }, // curl segment mirrored → leaf R2
-    { from: 112, to: 159, flip: false }  // bud → bloom
-  ];
-  var TIMELINE = [];
-  SEGMENTS.forEach(function (s) {
-    for (var f = s.from; f <= s.to; f++) TIMELINE.push({ idx: f, flip: s.flip });
-  });
-  var STEP_COUNT = TIMELINE.length; // virtual frames driven by scroll
-
   var prefersReduced = window.matchMedia &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -118,37 +103,28 @@
     return null;
   }
 
-  function drawCover(img, alpha, flip) {
+  function drawCover(img, alpha) {
     var cw = canvas.width, ch = canvas.height;
     var iw = img.naturalWidth, ih = img.naturalHeight;
     var scale = Math.max(cw / iw, ch / ih); // cover; the stalk is centred
     var dw = iw * scale, dh = ih * scale;
     ctx.globalAlpha = alpha;
-    if (flip) {
-      ctx.save();
-      ctx.translate(cw, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
-      ctx.restore();
-    } else {
-      ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
-    }
+    ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
   }
 
-  function draw(step) {
-    // Cross-fade the two timeline steps around the fractional index so
-    // scrubbing interpolates smoothly (and dissolves across segment seams).
-    var a = Math.max(0, Math.min(STEP_COUNT - 1, Math.floor(step)));
-    var b = Math.min(a + 1, STEP_COUNT - 1);
-    var frac = step - a;
-    var entryA = TIMELINE[a], entryB = TIMELINE[b];
-    var imgA = nearestFrame(entryA.idx);
+  function draw(frame) {
+    // Cross-fade the two frames around the fractional index so scrubbing
+    // interpolates smoothly instead of stepping frame to frame.
+    var idxA = Math.floor(frame);
+    var idxB = Math.min(idxA + 1, FRAME_COUNT - 1);
+    var frac = frame - idxA;
+    var imgA = nearestFrame(idxA);
     if (!imgA) return;
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
-    drawCover(imgA, 1, entryA.flip);
-    var imgB = frames[entryB.idx];
-    if (imgB && b !== a && frac > 0.01) drawCover(imgB, frac, entryB.flip);
+    drawCover(imgA, 1);
+    var imgB = frames[idxB];
+    if (imgB && imgB !== imgA && frac > 0.01) drawCover(imgB, frac);
     ctx.globalAlpha = 1;
   }
 
@@ -197,7 +173,7 @@
   function loop() {
     readProgress();
 
-    var target = progress * (STEP_COUNT - 1);
+    var target = progress * (FRAME_COUNT - 1);
     // Ease toward the target so scrubbing feels fluid both directions,
     // settling exactly once the remaining distance is imperceptible.
     renderedFrame += (target - renderedFrame) * 0.12;
