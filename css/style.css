@@ -104,6 +104,20 @@ em { font-style: normal; color: var(--teal); }
   border-bottom: 1px solid var(--line);
 }
 
+/* Over the pinned video stage the bar goes transparent so nothing
+   interferes with the scene — a soft top scrim keeps text legible. */
+.scrub-on .site-header {
+  background: linear-gradient(to bottom, rgba(11, 15, 13, .38), rgba(11, 15, 13, 0));
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border-bottom: none;
+  color: #fff;
+}
+.scrub-on .lockup-name { color: #fff; text-shadow: 0 1px 12px rgba(11, 15, 13, .45); }
+.scrub-on .lockup-divider { background: rgba(255, 255, 255, .45); }
+.scrub-on .header-label { color: rgba(255, 255, 255, .85); text-shadow: 0 1px 10px rgba(11, 15, 13, .45); }
+.scrub-on .header-label .sparkle { border-color: #fff; }
+
 .lockup { display: flex; align-items: center; gap: 14px; }
 .lockup-name {
   font-family: var(--disp);
@@ -201,11 +215,11 @@ em { font-style: normal; color: var(--teal); }
 }
 .rail-tick {
   position: absolute;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  left: -3px; /* centres the 8px dot on the 2px rail line */
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 .rail-tick i {
   width: 8px;
@@ -369,24 +383,6 @@ em { font-style: normal; color: var(--teal); }
   box-shadow: 0 8px 24px rgba(13, 80, 60, .08);
 }
 .board-copy { display: flex; flex-direction: column; gap: 12px; }
-
-/* ---------- Footer ---------- */
-
-.site-footer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 28px;
-  align-items: center;
-  justify-content: space-between;
-  padding: 22px var(--pagepad);
-  border-top: 1px solid var(--line);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--ink2);
-  background: var(--wash);
-}
 
 /* ---------- Preloader ---------- */
 

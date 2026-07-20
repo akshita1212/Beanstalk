@@ -103,14 +103,29 @@
     return null;
   }
 
-  function draw(idx) {
-    var img = nearestFrame(idx);
-    if (!img) return;
+  function drawCover(img, alpha) {
     var cw = canvas.width, ch = canvas.height;
     var iw = img.naturalWidth, ih = img.naturalHeight;
     var scale = Math.max(cw / iw, ch / ih); // cover; the stalk is centred
     var dw = iw * scale, dh = ih * scale;
+    ctx.globalAlpha = alpha;
     ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+  }
+
+  function draw(frame) {
+    // Cross-fade the two frames around the fractional index so scrubbing
+    // interpolates smoothly instead of stepping frame to frame.
+    var idxA = Math.floor(frame);
+    var idxB = Math.min(idxA + 1, FRAME_COUNT - 1);
+    var frac = frame - idxA;
+    var imgA = nearestFrame(idxA);
+    if (!imgA) return;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    drawCover(imgA, 1);
+    var imgB = frames[idxB];
+    if (imgB && imgB !== imgA && frac > 0.01) drawCover(imgB, frac);
+    ctx.globalAlpha = 1;
   }
 
   /* ---------- Scroll progress & render loop ---------- */
@@ -160,14 +175,13 @@
 
     var target = progress * (FRAME_COUNT - 1);
     // Ease toward the target so scrubbing feels fluid both directions,
-    // snapping when close so we always settle on the exact frame.
-    renderedFrame += (target - renderedFrame) * 0.16;
-    if (Math.abs(target - renderedFrame) < 0.35) renderedFrame = target;
+    // settling exactly once the remaining distance is imperceptible.
+    renderedFrame += (target - renderedFrame) * 0.12;
+    if (Math.abs(target - renderedFrame) < 0.02) renderedFrame = target;
 
-    var idx = Math.round(renderedFrame);
-    if (idx !== lastDrawn) {
-      draw(idx);
-      lastDrawn = idx;
+    if (Math.abs(renderedFrame - lastDrawn) > 0.004) {
+      draw(renderedFrame);
+      lastDrawn = renderedFrame;
     }
 
     updateOverlays();
