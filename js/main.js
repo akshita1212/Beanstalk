@@ -128,11 +128,13 @@
 
   function fadeAt(p, a, b) {
     // 0 outside [a,b]; eased 0→1→0 across the entry/exit edges inside.
+    // Ranges touching the stage boundaries skip that edge, so the intro
+    // caption is visible at p=0 and the finale holds through p=1.
     if (p < a || p > b) return 0;
     var edge = Math.min(0.05, (b - a) / 3);
     var t = 1;
-    if (p < a + edge) t = (p - a) / edge;
-    else if (p > b - edge) t = (b - p) / edge;
+    if (a > 0 && p < a + edge) t = (p - a) / edge;
+    else if (b < 1 && p > b - edge) t = (b - p) / edge;
     return t * t * (3 - 2 * t); // smoothstep
   }
 

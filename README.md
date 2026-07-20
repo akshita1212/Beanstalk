@@ -1,9 +1,9 @@
 # From Seed to Ecosystem 🌱
 
 A scroll-driven, immersive website for the **EKL × Merkle — AI Re-Imagination Summit 2026**.
-A magical beanstalk grows as you scroll: the seed cracks, the stalk rises, buds branch left
-and right — each one revealing an AI solution — and the story blooms into one intelligent
-ecosystem.
+The page opens directly on the enchanted seed, pinned full-screen. A magical beanstalk
+grows as you scroll: the seed cracks, the stalk rises, buds branch left and right — each
+one revealing an AI solution — and the story ends on the bloom: one intelligent ecosystem.
 
 Static site, no build step. Open `index.html` from any web server:
 
