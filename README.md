@@ -35,9 +35,11 @@ The source video is cut into four reusable segment templates, each starting and 
 on a bare stalk (`SEG` in `js/main.js`): seed (0–2s), left leaf (2–5s), right leaf
 (5–8s), bloom (8–10s). The playback timeline is assembled per story: seed, then one
 leaf segment per solution (alternating left/right), then bloom. Solutions live in the
-`SOLUTIONS` array; the **+ Add solution** button appends the next entry from `BACKLOG`
-(then generic placeholders, capped at 8), regenerates the cards, rail and finale copy,
-and rescales the scroll length so pacing stays constant.
+`SOLUTIONS` array; the **+ Add solution** button opens a popup (label, name,
+description — prefilled with the next `BACKLOG` suggestion when one is left, capped at
+8 solutions). Submitting plants the solution: cards, rail and finale copy regenerate,
+the scroll length rescales so pacing stays constant, and the page rides down to the
+newly grown leaf.
 
 ## Regenerating frames
 

@@ -66,6 +66,32 @@
   <span class="add-label">Add solution</span>
 </button>
 
+<!-- New-solution popup: content entered here grows a templated leaf -->
+<div class="modal" id="solutionModal" hidden>
+  <div class="modal-backdrop" data-close></div>
+  <form class="modal-card" id="modalForm" novalidate>
+    <p class="eyebrow">Plant a new solution</p>
+    <h3 class="card-title">Grow the ecosystem</h3>
+    <p class="modal-hint">A new leaf will grow for it — left and right sides alternate automatically.</p>
+    <label class="field">
+      <span>Label</span>
+      <input id="inpKey" type="text" maxlength="12" autocomplete="off" placeholder="e.g. Reach">
+    </label>
+    <label class="field">
+      <span>Solution name</span>
+      <input id="inpTitle" type="text" maxlength="60" autocomplete="off" placeholder="e.g. Connected Dealer Experience">
+    </label>
+    <label class="field">
+      <span>Short description</span>
+      <textarea id="inpBody" rows="4" maxlength="300" placeholder="One or two sentences on what this solution does."></textarea>
+    </label>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" data-close>Cancel</button>
+      <button type="submit" class="btn-solid">Plant it</button>
+    </div>
+  </form>
+</div>
+
 <!-- ======================= Static storyboard (no-JS / reduced-motion fallback) ======================= -->
 <section class="storyboard" id="storyboard" aria-label="The beanstalk growth story">
   <article class="board-row">

@@ -422,6 +422,103 @@ em { font-style: normal; color: var(--teal); }
 }
 .board-copy { display: flex; flex-direction: column; gap: 12px; }
 
+/* ---------- New-solution popup ---------- */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.modal[hidden] { display: none; }
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 15, 13, .45);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity .25s;
+}
+
+.modal-card {
+  position: relative;
+  width: min(460px, 100%);
+  background: rgba(255, 255, 255, .95);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 18px 50px rgba(13, 80, 60, .2);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity .3s, transform .3s cubic-bezier(.22, .61, .36, 1);
+}
+.modal.is-open .modal-backdrop { opacity: 1; }
+.modal.is-open .modal-card { opacity: 1; transform: none; }
+
+.modal-hint { font-size: 13px; color: var(--ink2); margin-top: -6px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field span {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink2);
+}
+.field input,
+.field textarea {
+  font-family: var(--body);
+  font-size: 14px;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color .2s;
+}
+.field textarea { resize: vertical; min-height: 84px; }
+.field input:focus,
+.field textarea:focus { border-color: var(--teal); }
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+.btn-solid,
+.btn-ghost {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  border-radius: 9px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background .2s, color .2s, transform .2s;
+}
+.btn-solid {
+  color: var(--wash);
+  background: var(--ink);
+  border: none;
+}
+.btn-solid:hover { background: var(--teal); transform: translateY(-1px); }
+.btn-ghost {
+  color: var(--teal);
+  background: transparent;
+  border: 1px solid var(--teal);
+}
+.btn-ghost:hover { background: var(--teal); color: var(--wash); }
+
 /* ---------- Preloader ---------- */
 
 .loader {

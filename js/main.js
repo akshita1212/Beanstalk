@@ -89,9 +89,10 @@
 
   /* ---------- Story building ---------- */
 
-  var TIMELINE = [];   // virtual steps -> source frame index
-  var overlays = [];   // {el, start, end, visible}
-  var ticks = [];      // {el, at}
+  var TIMELINE = [];    // virtual steps -> source frame index
+  var overlays = [];    // {el, start, end, visible}
+  var ticks = [];       // {el, at}
+  var storyRanges = []; // per-solution {sol, side, range} for navigation
 
   function pushSegment(seg) {
     var start = TIMELINE.length;
@@ -136,19 +137,21 @@
     var solRanges = SOLUTIONS.map(function (sol, i) {
       return { sol: sol, side: i % 2 === 0 ? "left" : "right", range: pushSegment(i % 2 === 0 ? SEG.left : SEG.right) };
     });
+    storyRanges = solRanges;
     var bloom = pushSegment(SEG.bloom);
     var total = TIMELINE.length - 1;
 
     // Intro caption across the seed segment
     overlays.push({ el: introCaption, start: 0, end: (seed.end / total) * 0.82, visible: false });
 
-    // One card per solution, visible while its leaf is on screen
+    // One card per solution, timed to the span its leaf is actually on
+    // screen (leaf sprouts ~18% into a segment, slides out by ~85%).
     solRanges.forEach(function (s, i) {
       var a = s.range.start / total, b = s.range.end / total, len = b - a;
       var card = makeCard(s.sol, i, s.side);
       sticky.insertBefore(card, finaleCaption);
-      overlays.push({ el: card, start: a + len * 0.10, end: a + len * 0.88, visible: false });
-      ticks.push(makeTick(s.sol.key, a + len * 0.18));
+      overlays.push({ el: card, start: a + len * 0.20, end: a + len * 0.85, visible: false });
+      ticks.push(makeTick(s.sol.key, a + len * 0.30));
     });
 
     // Finale caption once the flower opens
@@ -172,21 +175,63 @@
     lastDrawn = -1; // content changed under the current scroll position
   }
 
-  function nextSolution() {
-    if (BACKLOG.length) return BACKLOG.shift();
-    var n = SOLUTIONS.length + 1;
-    return {
-      key: "New",
-      title: "Your Next Solution " + String(n).padStart(2, "0"),
-      body: "A fresh idea takes root. Swap in the name, story and impact of the next solution your ecosystem grows."
-    };
+  /* ---------- New-solution popup ---------- */
+
+  var modal = document.getElementById("solutionModal");
+  var modalForm = document.getElementById("modalForm");
+  var inpKey = document.getElementById("inpKey");
+  var inpTitle = document.getElementById("inpTitle");
+  var inpBody = document.getElementById("inpBody");
+  var suggestionOpen = false; // modal was prefilled from the backlog
+
+  function openModal() {
+    if (SOLUTIONS.length >= MAX_SOLUTIONS) return;
+    var s = BACKLOG.length ? BACKLOG[0] : null;
+    suggestionOpen = !!s;
+    inpKey.value = s ? s.key : "";
+    inpTitle.value = s ? s.title : "";
+    inpBody.value = s ? s.body : "";
+    modal.hidden = false;
+    requestAnimationFrame(function () {
+      modal.classList.add("is-open");
+      inpTitle.focus();
+      inpTitle.select();
+    });
+  }
+
+  function closeModal() {
+    modal.classList.remove("is-open");
+    setTimeout(function () { modal.hidden = true; }, 260);
+  }
+
+  function scrollToSolution(i) {
+    var r = storyRanges[i];
+    if (!r) return;
+    var p = (r.range.start + (r.range.end - r.range.start) * 0.5) / (TIMELINE.length - 1);
+    var top = stage.offsetTop + p * (stage.offsetHeight - window.innerHeight);
+    window.scrollTo({ top: top, behavior: "smooth" });
   }
 
   if (addBtn) {
-    addBtn.addEventListener("click", function () {
-      if (SOLUTIONS.length >= MAX_SOLUTIONS) return;
-      SOLUTIONS.push(nextSolution());
+    addBtn.addEventListener("click", openModal);
+    modal.addEventListener("click", function (e) {
+      if (e.target.hasAttribute("data-close")) closeModal();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && !modal.hidden) closeModal();
+    });
+    modalForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (SOLUTIONS.length >= MAX_SOLUTIONS) { closeModal(); return; }
+      SOLUTIONS.push({
+        key: (inpKey.value.trim() || "New").slice(0, 12),
+        title: inpTitle.value.trim() || "Your Next Solution",
+        body: inpBody.value.trim() || "A fresh idea takes root. Swap in the name, story and impact of the next solution your ecosystem grows."
+      });
+      if (suggestionOpen) BACKLOG.shift(); // that suggestion's slot is used
       buildStory();
+      closeModal();
+      scrollToSolution(SOLUTIONS.length - 1); // ride down to watch the new leaf grow
     });
   }
 
@@ -294,8 +339,12 @@
   }
 
   function updateOverlays() {
+    // Key overlays to the frame actually rendered (renderedFrame lags the
+    // scroll position while easing), so cards stay in sync with their leaf
+    // even during fast scrolls.
+    var effP = TIMELINE.length > 1 ? renderedFrame / (TIMELINE.length - 1) : 0;
     overlays.forEach(function (o) {
-      var t = fadeAt(progress, o.start, o.end);
+      var t = fadeAt(effP, o.start, o.end);
       o.el.style.opacity = t.toFixed(3);
       o.el.style.setProperty("--card-shift", ((1 - t) * 26).toFixed(1) + "px");
       var vis = t > 0.35;
@@ -305,7 +354,7 @@
       }
     });
     ticks.forEach(function (t) {
-      t.el.classList.toggle("active", progress >= t.at - 0.005);
+      t.el.classList.toggle("active", effP >= t.at - 0.005);
     });
   }
 
