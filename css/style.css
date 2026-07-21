@@ -173,7 +173,45 @@ em { font-style: normal; color: var(--teal); }
 /* ---------- Pinned growth stage ---------- */
 
 .stage { display: none; position: relative; }
-.scrub-on .stage { display: block; height: 720vh; }
+.scrub-on .stage { display: block; height: 720vh; } /* JS rescales per story length */
+
+/* "+ Add solution" — grows the story by one leaf segment */
+.add-solution {
+  display: none;
+  position: fixed;
+  right: clamp(16px, 3vw, 40px);
+  bottom: clamp(20px, 4vh, 40px);
+  z-index: 45;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--wash);
+  background: var(--ink);
+  border: none;
+  border-radius: 10px;
+  padding: 13px 20px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(11, 15, 13, .25);
+  transition: background .2s, transform .2s;
+}
+.scrub-on .add-solution { display: inline-flex; }
+.add-solution:hover:not(:disabled) { background: var(--teal); transform: translateY(-1px); }
+.add-solution:disabled { opacity: .55; cursor: default; }
+.add-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 1;
+}
 
 .stage-sticky {
   position: sticky;
@@ -468,6 +506,9 @@ em { font-style: normal; color: var(--teal); }
   .board-row,
   .board-row.row-flip { grid-template-columns: 1fr; }
   .board-row.row-flip figure { order: 0; }
+
+  /* Keep the add button clear of the bottom-sheet cards */
+  .add-solution { bottom: auto; top: 64px; right: 16px; }
 }
 
 /* ---------- Reduced motion ---------- */

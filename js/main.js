@@ -1,9 +1,12 @@
 /* ============================================================
    From Seed to Ecosystem — scroll-scrubbed beanstalk stage
    - Preloads the WebP frame sequence, draws to canvas
-   - Maps scroll progress of the pinned stage to frame index
-   - Eases the frame index for smooth forward/backward scrub
-   - Fades solution cards in/out at their growth milestones
+   - The source video is cut into reusable segment templates,
+     each starting/ending on a bare stalk:
+       seed (0–2s) · left leaf (2–5s) · right leaf (5–8s) · bloom (8–10s)
+   - The story timeline is assembled from those templates: one
+     leaf segment per solution (alternating sides), then bloom
+   - "+ Add solution" appends a solution and rebuilds the story
    - Falls back to the static storyboard for reduced motion,
      missing canvas support, or JS disabled (noscript path)
    ============================================================ */
@@ -15,6 +18,50 @@
   var FRAME_PATH = function (i) {
     return "assets/frames/frame_" + String(i).padStart(3, "0") + ".webp";
   };
+
+  // Segment templates (0-indexed source frames @16fps).
+  var SEG = {
+    seed:  { from: 0,   to: 32  }, // seed cracks, sprout rises to bare stalk
+    left:  { from: 32,  to: 80  }, // left leaf grows, then slides out of frame
+    right: { from: 80,  to: 128 }, // right leaf grows, then slides out of frame
+    bloom: { from: 128, to: 159 }  // bud forms and the flower opens
+  };
+
+  var ICONS = [
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5.5" rx="7.5" ry="3"/><path d="M4.5 5.5v6c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3v-6"/><path d="M4.5 11.5v6c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3v-6"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h4l2.5-6 4 12 2.5-6h5"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3z"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="M12 13c0-3.5-2.7-6.3-6-6.5C6.2 10 8.7 12.8 12 13z"/><path d="M12 10c0-3.9 3-7 6.5-7C18.3 6.9 15.5 10 12 10z"/></svg>'
+  ];
+
+  var SOLUTIONS = [
+    {
+      key: "Know",
+      title: "Unified Farm Intelligence",
+      body: "Every farmer, machine and acre in one living data foundation. Signals from dealers, devices and the field flow into a single intelligent core — the soil that every other solution grows from."
+    },
+    {
+      key: "Serve",
+      title: "Predictive Service & Uptime",
+      body: "AI listens to every tractor in the field and flags wear before it becomes downtime. Parts, technicians and service windows are scheduled around the harvest — not the other way round."
+    }
+  ];
+
+  // What the "+ Add solution" button plants next.
+  var BACKLOG = [
+    {
+      key: "Reach",
+      title: "Connected Dealer Experience",
+      body: "One personalised journey across showroom, web and app. Dealers see what each farmer needs next; farmers feel known at every touchpoint, from first enquiry to trade-in."
+    },
+    {
+      key: "Grow",
+      title: "Agronomy Copilot",
+      body: "An AI advisor in every farmer's pocket — crop plans, weather calls, machine settings and finance options, answered in the farmer's own language, at the moment of decision."
+    }
+  ];
+  var MAX_SOLUTIONS = 8;
+  var COUNT_WORDS = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight"];
 
   var prefersReduced = window.matchMedia &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -30,25 +77,118 @@
   document.documentElement.classList.add("scrub-on");
 
   var stage = document.getElementById("stage");
+  var sticky = stage.querySelector(".stage-sticky");
+  var rail = stage.querySelector(".rail");
+  var introCaption = document.getElementById("introCaption");
+  var finaleCaption = document.getElementById("finaleCaption");
+  var finaleText = document.getElementById("finaleText");
+  var addBtn = document.getElementById("addSolution");
   var loader = document.getElementById("loader");
   var loaderFill = document.getElementById("loaderFill");
   var loaderPct = document.getElementById("loaderPct");
 
-  var overlays = Array.prototype.slice.call(
-    stage.querySelectorAll("[data-in]")
-  ).map(function (el) {
-    return {
-      el: el,
-      start: parseFloat(el.getAttribute("data-in")),
-      end: parseFloat(el.getAttribute("data-out")),
-      visible: false
-    };
-  });
+  /* ---------- Story building ---------- */
 
-  var ticks = Array.prototype.slice.call(stage.querySelectorAll(".rail-tick"));
-  ticks.forEach(function (tick) {
-    tick.style.top = (parseFloat(tick.getAttribute("data-at")) * 100) + "%";
-  });
+  var TIMELINE = [];   // virtual steps -> source frame index
+  var overlays = [];   // {el, start, end, visible}
+  var ticks = [];      // {el, at}
+
+  function pushSegment(seg) {
+    var start = TIMELINE.length;
+    for (var f = seg.from; f <= seg.to; f++) TIMELINE.push(f);
+    return { start: start, end: TIMELINE.length - 1 };
+  }
+
+  function makeCard(sol, index, side) {
+    var el = document.createElement("article");
+    el.className = "solution-card js-card " + (side === "left" ? "side-left" : "side-right");
+    el.innerHTML =
+      '<span class="card-connector" aria-hidden="true"></span>' +
+      '<div class="card-head">' +
+        '<span class="icon-chip" aria-hidden="true">' + ICONS[index % ICONS.length] + "</span>" +
+        '<p class="eyebrow">Solution ' + String(index + 1).padStart(2, "0") + " · " + sol.key + "</p>" +
+      "</div>" +
+      '<h3 class="card-title"></h3>' +
+      '<p class="card-body"></p>';
+    el.querySelector(".card-title").textContent = sol.title;
+    el.querySelector(".card-body").textContent = sol.body;
+    return el;
+  }
+
+  function makeTick(label, at) {
+    var el = document.createElement("span");
+    el.className = "rail-tick";
+    el.innerHTML = "<i></i><em></em>";
+    el.querySelector("em").textContent = label;
+    el.style.top = (at * 100) + "%";
+    return { el: el, at: at };
+  }
+
+  function buildStory() {
+    // Reset generated DOM
+    Array.prototype.slice.call(sticky.querySelectorAll(".js-card")).forEach(function (n) { n.remove(); });
+    Array.prototype.slice.call(rail.querySelectorAll(".rail-tick")).forEach(function (n) { n.remove(); });
+    TIMELINE = [];
+    overlays = [];
+    ticks = [];
+
+    var seed = pushSegment(SEG.seed);
+    var solRanges = SOLUTIONS.map(function (sol, i) {
+      return { sol: sol, side: i % 2 === 0 ? "left" : "right", range: pushSegment(i % 2 === 0 ? SEG.left : SEG.right) };
+    });
+    var bloom = pushSegment(SEG.bloom);
+    var total = TIMELINE.length - 1;
+
+    // Intro caption across the seed segment
+    overlays.push({ el: introCaption, start: 0, end: (seed.end / total) * 0.82, visible: false });
+
+    // One card per solution, visible while its leaf is on screen
+    solRanges.forEach(function (s, i) {
+      var a = s.range.start / total, b = s.range.end / total, len = b - a;
+      var card = makeCard(s.sol, i, s.side);
+      sticky.insertBefore(card, finaleCaption);
+      overlays.push({ el: card, start: a + len * 0.10, end: a + len * 0.88, visible: false });
+      ticks.push(makeTick(s.sol.key, a + len * 0.18));
+    });
+
+    // Finale caption once the flower opens
+    var bloomStart = bloom.start / total;
+    overlays.push({ el: finaleCaption, start: bloomStart + (1 - bloomStart) * 0.42, end: 1.01, visible: false });
+    finaleText.innerHTML = (COUNT_WORDS[SOLUTIONS.length - 1] || SOLUTIONS.length) +
+      " solutions, one root system —<br>growing every farm it touches.";
+
+    ticks.unshift(makeTick("Seed", 0.04));
+    ticks.push(makeTick("Bloom", bloomStart + (1 - bloomStart) * 0.42));
+    ticks.forEach(function (t) { rail.appendChild(t.el); });
+
+    // Scroll length scales with the story so pacing stays constant.
+    stage.style.height = Math.round(TIMELINE.length * 4.5) + "vh";
+
+    if (addBtn) {
+      var full = SOLUTIONS.length >= MAX_SOLUTIONS;
+      addBtn.disabled = full;
+      addBtn.querySelector(".add-label").textContent = full ? "Ecosystem full" : "Add solution";
+    }
+    lastDrawn = -1; // content changed under the current scroll position
+  }
+
+  function nextSolution() {
+    if (BACKLOG.length) return BACKLOG.shift();
+    var n = SOLUTIONS.length + 1;
+    return {
+      key: "New",
+      title: "Your Next Solution " + String(n).padStart(2, "0"),
+      body: "A fresh idea takes root. Swap in the name, story and impact of the next solution your ecosystem grows."
+    };
+  }
+
+  if (addBtn) {
+    addBtn.addEventListener("click", function () {
+      if (SOLUTIONS.length >= MAX_SOLUTIONS) return;
+      SOLUTIONS.push(nextSolution());
+      buildStory();
+    });
+  }
 
   /* ---------- Frame preloading ---------- */
 
@@ -112,26 +252,26 @@
     ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
   }
 
-  function draw(frame) {
-    // Cross-fade the two frames around the fractional index so scrubbing
-    // interpolates smoothly instead of stepping frame to frame.
-    var idxA = Math.floor(frame);
-    var idxB = Math.min(idxA + 1, FRAME_COUNT - 1);
-    var frac = frame - idxA;
-    var imgA = nearestFrame(idxA);
+  function draw(step) {
+    // Cross-fade the two steps around the fractional index so scrubbing
+    // interpolates smoothly (and dissolves across segment seams).
+    var a = Math.max(0, Math.min(TIMELINE.length - 1, Math.floor(step)));
+    var b = Math.min(a + 1, TIMELINE.length - 1);
+    var frac = step - a;
+    var imgA = nearestFrame(TIMELINE[a]);
     if (!imgA) return;
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
     drawCover(imgA, 1);
-    var imgB = frames[idxB];
-    if (imgB && imgB !== imgA && frac > 0.01) drawCover(imgB, frac);
+    var imgB = frames[TIMELINE[b]];
+    if (imgB && b !== a && frac > 0.01) drawCover(imgB, frac);
     ctx.globalAlpha = 1;
   }
 
   /* ---------- Scroll progress & render loop ---------- */
 
   var progress = 0;        // 0..1 through the pinned stage
-  var renderedFrame = 0;   // eased, fractional frame index
+  var renderedFrame = 0;   // eased, fractional step index
   var lastDrawn = -1;
 
   function readProgress() {
@@ -164,16 +304,15 @@
         o.el.classList.toggle("is-visible", vis);
       }
     });
-    ticks.forEach(function (tick) {
-      var at = parseFloat(tick.getAttribute("data-at"));
-      tick.classList.toggle("active", progress >= at - 0.005);
+    ticks.forEach(function (t) {
+      t.el.classList.toggle("active", progress >= t.at - 0.005);
     });
   }
 
   function loop() {
     readProgress();
 
-    var target = progress * (FRAME_COUNT - 1);
+    var target = progress * (TIMELINE.length - 1);
     // Ease toward the target so scrubbing feels fluid both directions,
     // settling exactly once the remaining distance is imperceptible.
     renderedFrame += (target - renderedFrame) * 0.12;
@@ -198,6 +337,7 @@
     requestAnimationFrame(loop);
   }
 
+  buildStory();
   window.addEventListener("resize", resize);
   window.addEventListener("orientationchange", resize);
 })();

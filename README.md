@@ -29,11 +29,15 @@ python3 -m http.server 8000
   JavaScript disabled, the pinned stage is replaced by a static storyboard (key frames +
   the same content in normal document flow). Mobile turns side cards into bottom sheets.
 
-## Retiming the story
+## Story templates & the add button
 
-Card timings live on the elements in `index.html` (`data-in` / `data-out`, both 0–1 across
-the stage). At 16 fps, video time `t` maps to progress `p = t / 10` and frame
-`n = round(t × 16) + 1`.
+The source video is cut into four reusable segment templates, each starting and ending
+on a bare stalk (`SEG` in `js/main.js`): seed (0–2s), left leaf (2–5s), right leaf
+(5–8s), bloom (8–10s). The playback timeline is assembled per story: seed, then one
+leaf segment per solution (alternating left/right), then bloom. Solutions live in the
+`SOLUTIONS` array; the **+ Add solution** button appends the next entry from `BACKLOG`
+(then generic placeholders, capped at 8), regenerates the cards, rail and finale copy,
+and rescales the scroll length so pacing stays constant.
 
 ## Regenerating frames
 

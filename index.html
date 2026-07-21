@@ -34,17 +34,13 @@
     <canvas id="growthCanvas" aria-hidden="true"></canvas>
     <div class="stage-vignette" aria-hidden="true"></div>
 
-    <!-- Milestone rail -->
+    <!-- Milestone rail (ticks are generated per solution) -->
     <nav class="rail" aria-hidden="true">
       <span class="rail-line"></span>
-      <span class="rail-tick" data-at="0.04"><i></i><em>Seed</em></span>
-      <span class="rail-tick" data-at="0.20"><i></i><em>Know</em></span>
-      <span class="rail-tick" data-at="0.44"><i></i><em>Serve</em></span>
-      <span class="rail-tick" data-at="0.89"><i></i><em>Bloom</em></span>
     </nav>
 
     <!-- Intro caption over the seed -->
-    <div class="stage-caption" data-in="0.00" data-out="0.14">
+    <div class="stage-caption" id="introCaption">
       <p class="eyebrow">Chapter 00 · The seed</p>
       <p class="caption-text">Every ecosystem starts as a single idea,<br>planted in good soil.</p>
       <div class="scroll-cue" aria-hidden="true">
@@ -53,49 +49,27 @@
       </div>
     </div>
 
-    <!-- Solution 1 — left leaf -->
-    <article class="solution-card side-left" data-in="0.20" data-out="0.42">
-      <span class="card-connector" aria-hidden="true"></span>
-      <div class="card-head">
-        <span class="icon-chip" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5.5" rx="7.5" ry="3"/><path d="M4.5 5.5v6c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3v-6"/><path d="M4.5 11.5v6c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3v-6"/></svg>
-        </span>
-        <p class="eyebrow">Solution 01 · Know</p>
-      </div>
-      <h3 class="card-title">Unified Farm Intelligence</h3>
-      <p class="card-body">Every farmer, machine and acre in one living data foundation.
-      Signals from dealers, devices and the field flow into a single intelligent core —
-      the soil that every other solution grows from.</p>
-    </article>
-
-    <!-- Solution 2 — right leaf -->
-    <article class="solution-card side-right" data-in="0.44" data-out="0.61">
-      <span class="card-connector" aria-hidden="true"></span>
-      <div class="card-head">
-        <span class="icon-chip" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h4l2.5-6 4 12 2.5-6h5"/></svg>
-        </span>
-        <p class="eyebrow">Solution 02 · Serve</p>
-      </div>
-      <h3 class="card-title">Predictive Service &amp; Uptime</h3>
-      <p class="card-body">AI listens to every tractor in the field and flags wear before it
-      becomes downtime. Parts, technicians and service windows are scheduled around the
-      harvest — not the other way round.</p>
-    </article>
+    <!-- Solution cards are generated here from the story data (js/main.js) -->
 
     <!-- Finale caption at the bloom -->
-    <div class="stage-caption caption-finale" data-in="0.89" data-out="1.01">
+    <div class="stage-caption caption-finale" id="finaleCaption">
       <p class="eyebrow eyebrow-center">The bloom</p>
       <p class="finale-title"><span class="sparkle" aria-hidden="true">✦</span> One intelligent ecosystem</p>
-      <p class="caption-text">Two solutions, one root system —<br>growing every farm it touches.</p>
+      <p class="caption-text" id="finaleText">Two solutions, one root system —<br>growing every farm it touches.</p>
     </div>
   </div>
 </section>
 
+<!-- Grows the story by one solution (next leaf segment) -->
+<button class="add-solution" id="addSolution" type="button">
+  <span class="add-plus" aria-hidden="true">+</span>
+  <span class="add-label">Add solution</span>
+</button>
+
 <!-- ======================= Static storyboard (no-JS / reduced-motion fallback) ======================= -->
 <section class="storyboard" id="storyboard" aria-label="The beanstalk growth story">
   <article class="board-row">
-    <figure><img src="assets/frames/frame_016.webp" alt="An enchanted seed cracking open in dark soil, glowing green as a sprout emerges." loading="lazy" width="1280" height="720"></figure>
+    <figure><img src="assets/frames/frame_010.webp" alt="An enchanted seed cracking open in dark soil, glowing green as a sprout emerges." loading="lazy" width="1280" height="720"></figure>
     <div class="board-copy">
       <p class="eyebrow">Chapter 00 · The seed</p>
       <h3 class="card-title">Every ecosystem starts as a seed</h3>
@@ -103,7 +77,7 @@
     </div>
   </article>
   <article class="board-row row-flip">
-    <figure><img src="assets/frames/frame_052.webp" alt="The young beanstalk twists upward and its first broad leaf unfurls to the left." loading="lazy" width="1280" height="720"></figure>
+    <figure><img src="assets/frames/frame_056.webp" alt="The young beanstalk twists upward and its first broad leaf unfurls to the left." loading="lazy" width="1280" height="720"></figure>
     <div class="board-copy">
       <p class="eyebrow">Solution 01 · Know</p>
       <h3 class="card-title">Unified Farm Intelligence</h3>
@@ -111,7 +85,7 @@
     </div>
   </article>
   <article class="board-row">
-    <figure><img src="assets/frames/frame_084.webp" alt="A second leaf grows out to the right of the rising beanstalk." loading="lazy" width="1280" height="720"></figure>
+    <figure><img src="assets/frames/frame_106.webp" alt="A second leaf grows out to the right of the rising beanstalk." loading="lazy" width="1280" height="720"></figure>
     <div class="board-copy">
       <p class="eyebrow">Solution 02 · Serve</p>
       <h3 class="card-title">Predictive Service &amp; Uptime</h3>
@@ -119,7 +93,7 @@
     </div>
   </article>
   <article class="board-row row-flip">
-    <figure><img src="assets/frames/frame_158.webp" alt="The bud blooms into a luminous white flower with a golden centre." loading="lazy" width="1280" height="720"></figure>
+    <figure><img src="assets/frames/frame_152.webp" alt="The bud blooms into a luminous white flower with a golden centre." loading="lazy" width="1280" height="720"></figure>
     <div class="board-copy">
       <p class="eyebrow">The bloom</p>
       <h3 class="card-title">One intelligent ecosystem</h3>
