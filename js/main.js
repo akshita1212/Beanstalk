@@ -116,11 +116,10 @@
     return el;
   }
 
-  function makeTick(label, at) {
+  function makeTick(at) {
     var el = document.createElement("span");
     el.className = "rail-tick";
-    el.innerHTML = "<i></i><em></em>";
-    el.querySelector("em").textContent = label;
+    el.innerHTML = "<i></i>";
     el.style.top = (at * 100) + "%";
     return { el: el, at: at };
   }
@@ -151,7 +150,7 @@
       var card = makeCard(s.sol, i, s.side);
       sticky.insertBefore(card, finaleCaption);
       overlays.push({ el: card, start: a + len * 0.20, end: a + len * 0.85, visible: false });
-      ticks.push(makeTick(s.sol.key, a + len * 0.30));
+      ticks.push(makeTick(a + len * 0.30));
     });
 
     // Finale caption once the flower opens
@@ -160,8 +159,8 @@
     finaleText.innerHTML = (COUNT_WORDS[SOLUTIONS.length - 1] || SOLUTIONS.length) +
       " solutions, one root system —<br>growing every farm it touches.";
 
-    ticks.unshift(makeTick("Seed", 0.04));
-    ticks.push(makeTick("Bloom", bloomStart + (1 - bloomStart) * 0.42));
+    ticks.unshift(makeTick(0.04));
+    ticks.push(makeTick(bloomStart + (1 - bloomStart) * 0.42));
     ticks.forEach(function (t) { rail.appendChild(t.el); });
 
     // Scroll length scales with the story so pacing stays constant.
@@ -204,13 +203,37 @@
     setTimeout(function () { modal.hidden = true; }, 260);
   }
 
-  function scrollToSolution(i) {
-    var r = storyRanges[i];
-    if (!r) return;
-    var p = (r.range.start + (r.range.end - r.range.start) * 0.5) / (TIMELINE.length - 1);
+  function scrollToProgress(p) {
     var top = stage.offsetTop + p * (stage.offsetHeight - window.innerHeight);
     window.scrollTo({ top: top, behavior: "smooth" });
   }
+
+  function solutionMid(r) {
+    return (r.range.start + (r.range.end - r.range.start) * 0.5) / (TIMELINE.length - 1);
+  }
+
+  function scrollToSolution(i) {
+    if (storyRanges[i]) scrollToProgress(solutionMid(storyRanges[i]));
+  }
+
+  // Arrow keys step through the story: seed → each solution card → bloom.
+  // Up progresses, down regresses.
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+    if (modal && !modal.hidden) return; // don't hijack keys inside the popup
+    e.preventDefault();
+    var pts = [0].concat(storyRanges.map(solutionMid)).concat([1]);
+    var eps = 0.015;
+    if (e.key === "ArrowUp") {
+      for (var i = 0; i < pts.length; i++) {
+        if (pts[i] > progress + eps) { scrollToProgress(pts[i]); return; }
+      }
+    } else {
+      for (var j = pts.length - 1; j >= 0; j--) {
+        if (pts[j] < progress - eps) { scrollToProgress(pts[j]); return; }
+      }
+    }
+  });
 
   if (addBtn) {
     addBtn.addEventListener("click", openModal);

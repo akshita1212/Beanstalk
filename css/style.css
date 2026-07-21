@@ -268,26 +268,11 @@ em { font-style: normal; color: var(--teal); }
   transition: background .25s, transform .25s, box-shadow .25s;
   flex: none;
 }
-.rail-tick em {
-  font-family: var(--body);
-  font-style: normal;
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, .75);
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: opacity .25s, transform .25s;
-  text-shadow: 0 1px 8px rgba(11, 15, 13, .35);
-  white-space: nowrap;
-}
 .rail-tick.active i {
   background: var(--teal-bar);
   transform: scale(1.35);
   box-shadow: 0 0 12px rgba(22, 195, 154, .8);
 }
-.rail-tick.active em { opacity: 1; transform: translateX(0); }
 
 /* Stage captions */
 .stage-caption {
